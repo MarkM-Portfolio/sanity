@@ -1,0 +1,9 @@
+# This is the docker file for build the tester image
+
+FROM connections-docker.artifactory.cwp.pnp-hcl.com/application-tester
+
+RUN apk add --update curl
+
+COPY tests /usr/src/app/tests
+
+WORKDIR /app

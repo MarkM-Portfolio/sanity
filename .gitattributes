@@ -1,0 +1,23 @@
+**/Chart.yaml linguist-language=Kubernetes linguist-vendored=false
+**/config.yaml linguist-language=Kubernetes linguist-vendored=false
+**/deployment.yaml linguist-language=Kubernetes linguist-vendored=false
+**/ingress.yaml linguist-language=Kubernetes linguist-vendored=false
+**/sanity-tester.yaml linguist-language=Kubernetes linguist-vendored=false
+**/service.yaml linguist-language=Kubernetes linguist-vendored=false
+**/values.yaml linguist-language=Kubernetes linguist-vendored=false
+*.babelrc linguist-language=Babelrc linguist-vendored=false
+*.css linguist-language=CSS linguist-vendored=false
+*.dockerignore linguist-language=Docker linguist-vendored=false
+*.gitignore linguist-language=Git linguist-vendored=false
+*.helmignore linguist-language=Helmignore linguist-vendored=false
+*.js linguist-language=JavaScript linguist-vendored=false
+*.json linguist-language=JSON linguist-vendored=false
+*.jsx linguist-language=Jsx linguist-vendored=false
+*.md linguist-language=Markdown linguist-vendored=false
+*.microscanner linguist-language=Microscanner linguist-vendored=false
+*.pug linguist-language=Pug linguist-vendored=false
+*.sh linguist-language=Bash linguist-vendored=false
+*.tester linguist-language=Tester linguist-vendored=false
+*.tpl linguist-language=Template File linguist-vendored=false
+*.txt linguist-language=Text File linguist-vendored=false
+Dockerfile linguist-language=Docker linguist-vendored=false

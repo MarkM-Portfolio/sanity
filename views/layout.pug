@@ -1,0 +1,15 @@
+doctype html
+html
+  head
+    title= title
+    //- link(rel='stylesheet', href='/stylesheets/style.css')
+  body
+    nav.navbar.navbar-default
+      .navbar-header
+        a.navbar-brand(href="#") #{title}
+      #navbar.collapse.navbar-collapse
+        ul.nav.navbar-nav
+          li.active
+            a(href="#") Home
+    block content
+    script(src='javascripts/bundle.js')

@@ -1,0 +1,150 @@
+{{- if .Capabilities.APIVersions.Has "apps/v1" }}
+apiVersion: apps/v1
+{{- else }}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Deployment
+metadata:
+  name: {{ template "name" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "name" . }}
+      release: {{ .Release.Name }}
+      mService: sanity
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    rollingUpdate:
+      maxUnavailable: {{ .Values.rollingUpdate.maxUnavailable }}
+      maxSurge: {{ .Values.rollingUpdate.maxSurge }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "name" . }}
+        release: {{ .Release.Name }}
+        mService: sanity
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: "type"
+                operator: In
+                values: ["generic"]
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              topologyKey: "kubernetes.io/hostname"
+              labelSelector:
+                matchExpressions:
+                 - key: "mService"
+                   operator: In
+                   values: ["sanity"]
+      containers:
+        - name: {{ .Chart.Name }}
+{{- if .Values.global.onPrem }}
+          image: "{{ .Values.global.image.repository }}/sanity:{{ .Values.image.tag }}"
+{{- else }}
+          image: "{{ .Values.image.repository }}/sanity:{{ .Values.image.tag }}"
+{{- end }}
+{{- $services_to_check := quote .Values.servicesToCheck | default "ALL" -}}
+{{- if (or (contains "mongo" $services_to_check) (contains "ALL" $services_to_check) (eq "" $services_to_check)) }}
+          env:
+          - name: MONGO_CERT_USER
+            value: "sanity"
+          - name: X509FOLDER
+            value: "/home/ibm/app/var/mongo"
+{{- end }}
+          volumeMounts:
+{{- if (or (contains "elasticsearch" $services_to_check) (contains "ALL" $services_to_check) (eq "" $services_to_check)) }}
+            - name: elasticsearch-vol
+              mountPath: /home/ibm/app/var/elasticsearch
+{{- end }}
+{{- if (or (contains "solr" $services_to_check) (contains "ALL" $services_to_check) (eq "" $services_to_check)) }}
+            - name: solr-certs-vol
+              mountPath: /home/ibm/app/var/solr
+{{- end }}
+            - name: sanity-config-vol
+              mountPath: /home/ibm/app/etc/sanity
+            - name: config-vol
+              mountPath: /home/ibm/app/var/config
+{{- if (or (contains "haproxy-redis" $services_to_check) (contains "redis-sentinel" $services_to_check) (contains "haproxy-redis-events" $services_to_check) (contains "ALL" $services_to_check) (eq "" $services_to_check)) }}
+            - name: redis-secret-vol
+              mountPath: /home/ibm/app/var/redis
+{{- end }}
+{{- if (or (contains "mongo" $services_to_check) (contains "ALL" $services_to_check) (eq "" $services_to_check)) }}
+            - name: mongo-secret-vol
+              mountPath: /home/ibm/app/var/mongo
+{{- end }}
+            - name: new-relic-secret-vol
+              mountPath: /home/ibm/app/var/newrelic
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            runAsUser: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+          ports:
+            - containerPort: {{ .Values.service.internalPort }}
+          livenessProbe:
+            httpGet:
+              path: /api?type=livenessProbe
+              port: {{ .Values.service.internalPort }}
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api?type=readinessProbe
+              port: {{ .Values.service.internalPort }}
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      imagePullSecrets:
+        - name: {{ .Values.image.pullSecret }}
+      volumes:
+{{- if (or (contains "elasticsearch" $services_to_check) (contains "ALL" $services_to_check) (eq "" $services_to_check)) }}
+        - name: elasticsearch-vol
+          secret:
+            secretName: elasticsearch-secret
+{{- end }}
+{{- if (or (contains "solr" $services_to_check) (contains "ALL" $services_to_check) (eq "" $services_to_check)) }}
+        - name: solr-certs-vol
+          secret:
+            secretName: solr-certs-secret
+{{- end }}
+{{- if (or (contains "redis" $services_to_check) (contains "ALL" $services_to_check) (eq "" $services_to_check)) }}
+        - name: redis-secret-vol
+          secret:
+            secretName: redis-secret
+{{- end }}
+{{- if (or (contains "mongo" $services_to_check) (contains "ALL" $services_to_check) (eq "" $services_to_check)) }}
+        - name: mongo-secret-vol
+          secret:
+            secretName: mongo-secret
+{{- end }}
+        - name: new-relic-secret-vol
+          secret:
+            secretName: new-relic-secret
+        - name: config-vol
+          configMap:
+            defaultMode: 420
+            name: connections-env
+        - name: sanity-config-vol
+          configMap:
+            defaultMode: 420
+            name: {{ .Release.Name }}-config
+    {{- if .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+    {{- end }}

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ template "name" .  }}-tests"
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+  - name: {{ template "name" . }}-tests
+    image: "{{ .Values.image.repository }}/sanity-tester:{{ .Values.image.tag }}"
+    env:
+    command: ["sh", "-c", "/usr/src/app/tests/runtests.sh"]
+    resources:
+{{ toYaml .Values.resources | indent 6 }}
+  restartPolicy: Never

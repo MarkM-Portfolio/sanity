@@ -1,0 +1,17 @@
+# This Dockerfile is used to run https://get.aquasec.com/microscanner
+# TOKEN: generated token by: https://microscanner.aquasec.com/signup
+# example: 
+#   docker build --no-cache -t sanity-scan --build-arg TOKEN=<tokenHere> -f Dockerfile.microscanner . > ~/Downloads/sanity-aqua-report.json
+#
+FROM connections-docker.artifactory.cwp.pnp-hcl.com/sanity
+
+################## BEGIN INSTALLATION ######################
+ARG TOKEN
+
+USER root
+WORKDIR /opt/app
+
+RUN apk add --no-cache ca-certificates && update-ca-certificates
+ADD https://get.aquasec.com/microscanner .
+RUN chmod +x microscanner
+RUN ./microscanner ${TOKEN}

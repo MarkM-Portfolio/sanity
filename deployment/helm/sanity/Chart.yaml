@@ -1,0 +1,4 @@
+apiVersion: v1
+description: Sanity Checks for Connections Pink
+name: sanity
+version: 0.1.8
